@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { FaAngleDoubleRight } from 'react-icons/fa';
-// ATTENTION!!!!!!!!!!
-// I SWITCHED TO PERMANENT DOMAIN
+
+import TabContent from './TabContent';
+import TabMenu from './TabMenu';
+
 const url = 'https://course-api.com/react-tabs-project';
 function App() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [jobs, setJobs] = useState([]);
-  const [value, setValue] = useState(0);
+  const [jobIndex, setJobIndex] = useState(0);
 
   const fetchJobs = async () => {
-    const response = await fetch(url);
-    const newJobs = await response.json();
-    setJobs(newJobs);
-    setLoading(false);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+      const newJobs = await response.json();
+      setJobs(newJobs);
+    } catch (err) {
+      setError(true);
+      console.log(`error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -26,40 +37,27 @@ function App() {
       </section>
     );
   }
-  const { company, dates, duties, title } = jobs[value];
+
   return (
     <section className='section'>
       <div className='title'>
         <h2>expierence</h2>
         <div className='underline'></div>
       </div>
-      <div className='jobs-center'>
-        {/* btn container */}
-        {/* job info */}
-        <div className='btn-container'>
-          {jobs.map((item, index) => (
-            <button
-              key={item.id}
-              onClick={() => setValue(index)}
-              className={`job-btn ${index === value ? 'active-btn' : ''}`}
-            >
-              {item.company}
-            </button>
-          ))}
+      {error && <p className='error'>Something went wrong</p>}
+      {!error && (
+        <div className='jobs-center'>
+          <TabMenu jobs={jobs} jobIndex={jobIndex} onClick={(index) => setJobIndex(index)} />
+          {jobs[jobIndex] && (
+            <TabContent
+              company={jobs[jobIndex].company}
+              dates={jobs[jobIndex].dates}
+              duties={jobs[jobIndex].duties}
+              title={jobs[jobIndex].company}
+            />
+          )}
         </div>
-
-        <article className='job-info'>
-          <h3>{title}</h3>
-          <h4>{company}</h4>
-          <p className='job-date'>{dates}</p>
-          {duties.map((duty, index) => (
-            <div key={index} className='job-desc'>
-              <FaAngleDoubleRight className='job-icon' />
-              <p>{duty}</p>
-            </div>
-          ))}
-        </article>
-      </div>
+      )}
     </section>
   );
 }
